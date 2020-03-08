@@ -12,7 +12,7 @@ namespace CollectDependencies
         {
             var depsFile = File.ReadAllText(args[0]);
             var directoryName = Path.GetDirectoryName(args[0]);
-
+            string depsFullPath = Path.Combine(Environment.CurrentDirectory, args[0]);
             var files = new List<(string file, int line, bool optional)>();
             { // Create files from stuff in depsfile
                 var stack = new Stack<string>();
@@ -54,8 +54,8 @@ namespace CollectDependencies
                             }
                             catch (Exception e)
                             {
-                                var errorStrength = optBlock ? "warning" : "error";
-                                Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({lineNo}): {errorStrength}: Error resolving import {path}: {e}");
+                                var errorStrength = optBlock ? "WARNING" : "ERROR";
+                                Console.WriteLine($"{depsFullPath}({lineNo}): {errorStrength}: Error resolving import {path}: {e}");
                                 path = "$\"Invalid Path";
                             }
                         }
@@ -77,7 +77,7 @@ namespace CollectDependencies
                         else
                         {
                             path = "";
-                            Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({lineNo}): error: Invalid command {command}");
+                            Console.WriteLine($"{depsFullPath}({lineNo}): ERROR: Invalid command {command}");
                         }
                     }
 
@@ -102,7 +102,7 @@ namespace CollectDependencies
 
             foreach (var file in files)
             {
-                var errorStrength = file.optional ? "warning" : "error";
+                var errorStrength = file.optional ? "WARNING" : "ERROR";
                 string fname = null;
                 try
                 {
@@ -110,7 +110,12 @@ namespace CollectDependencies
                     fname = fparts[0];
 
                     if (fname == "") continue;
-
+                    string fullPath = Path.Combine(directoryName, fname);
+                    if (!File.Exists(fullPath))
+                    {
+                        Console.WriteLine($"{depsFullPath}({file.line}): {errorStrength}: Cannot find file at {fullPath}");
+                        continue;
+                    }
                     var outp = Path.Combine(directoryName ?? throw new InvalidOperationException(),
                         Path.GetFileName(fname) ?? throw new InvalidOperationException());
 
@@ -119,7 +124,7 @@ namespace CollectDependencies
                         outp = Path.Combine(directoryName, aliasp);
 
                     if (fparts.Contains("optional"))
-                        errorStrength = "warning";
+                        errorStrength = "WARNING";
 
                     bool emptyDll = !fparts.Contains("noempty");
 
@@ -185,7 +190,7 @@ namespace CollectDependencies
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.line}): warning: {e}");
+                            Console.WriteLine($"{depsFullPath}({file.line}): WARNING: {e}");
                         }
                     }
 
@@ -194,11 +199,11 @@ namespace CollectDependencies
                 }
                 catch (ArgumentException e)
                 {
-                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.line}): {errorStrength}: \"{file.file}\" {e}");
+                    Console.WriteLine($"{depsFullPath}({file.line}): {errorStrength}: \"{file.file}\" {e}");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.line}): {errorStrength}: {e}");
+                    Console.WriteLine($"{depsFullPath}({file.line}): {errorStrength}: {e}");
                 }
             }
 
