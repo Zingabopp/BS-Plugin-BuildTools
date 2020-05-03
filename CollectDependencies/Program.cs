@@ -12,7 +12,7 @@ namespace CollectDependencies
         {
             var depsFile = File.ReadAllText(args[0]);
             var directoryName = Path.GetDirectoryName(args[0]);
-
+            string depsFullPath = Path.Combine(Environment.CurrentDirectory, args[0]);
             var resolveIn = new List<string>();
             var files = new List<(string file, int line, bool optional)>();
             { // Create files from stuff in depsfile
@@ -58,7 +58,7 @@ namespace CollectDependencies
                             catch (Exception e)
                             {
                                 var errorStrength = optBlock ? "warning" : "error";
-                                Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({lineNo}): {errorStrength}: Error resolving import {path}: {e}");
+                                Console.WriteLine($"{depsFullPath}({lineNo}): {errorStrength}: Error resolving import {path}: {e}");
                                 path = "\" Invalid Path: ";
                             }
                         }
